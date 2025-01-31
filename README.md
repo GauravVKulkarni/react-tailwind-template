@@ -6,12 +6,7 @@
 2.	Navigate into the project directory:
     cd react-tailwind-template
 
-3.	Run the setup script:
-    This will automatically rename the project and update relevant files.
-
-    npm run setup
-
-4.	Install dependencies:
+3.	Install dependencies:
     npm install
 
 5.	Start the development server:
