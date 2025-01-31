@@ -7,42 +7,28 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
-rl.question("Enter the new project name (only letters, numbers, hyphens, or underscores): ", (newName) => {
-  if (!/^[a-zA-Z0-9_-]+$/.test(newName)) {
-    console.log("❌ Invalid project name. Use only letters, numbers, hyphens, or underscores.");
-    rl.close();
-    return;
-  }
-
+async function updateFilesAndRenameProject(newName) {
   const oldName = basename(process.cwd());
   const files = ["package.json", "vite.config.js", "README.md"];
   let allUpdatesSuccessful = true;
 
-  console.log(`\n🔄 Updating project name from '${oldName}' to '${newName}'...`);
-
-  files.forEach((file) => {
+  // Updating project files
+  for (const file of files) {
     const filePath = join(process.cwd(), file);
     if (existsSync(filePath)) {
-      readFile(filePath, "utf8", (err, content) => {
-        if (err) {
-          console.error(`❌ Error reading ${file}:`, err);
-          allUpdatesSuccessful = false;
-          return;
-        }
+      try {
+        const content = await readFileAsync(filePath, "utf8");
         const updatedContent = content.replace(new RegExp(oldName, "g"), newName);
-        writeFile(filePath, updatedContent, "utf8", (err) => {
-          if (err) {
-            console.error(`❌ Error writing ${file}:`, err);
-            allUpdatesSuccessful = false;
-          } else {
-            console.log(`✅ Updated ${file}`);
-          }
-        });
-      });
+        await writeFileAsync(filePath, updatedContent, "utf8");
+        console.log(`✅ Updated ${file}`);
+      } catch (err) {
+        console.error(`❌ Error reading or writing ${file}:`, err);
+        allUpdatesSuccessful = false;
+      }
     }
-  });
+  }
 
-  // Rename project folder safely
+  // Renaming the project folder
   const parentDir = resolve(process.cwd(), "..");
   const newPath = join(parentDir, newName);
 
@@ -63,10 +49,10 @@ rl.question("Enter the new project name (only letters, numbers, hyphens, or unde
     console.log(`cd ${newName}`);
     console.log("npm install");
 
-    // Self-delete the script
+    // Self-delete the script after renaming
     const scriptPath = join(newPath, "setup.js");
     try {
-      unlinkSync(scriptPath);
+      await unlinkAsync(scriptPath);
       console.log("🗑️  Setup script deleted automatically.");
     } catch (err) {
       console.log("⚠️ Could not delete setup.js. Please remove it manually.");
@@ -76,4 +62,42 @@ rl.question("Enter the new project name (only letters, numbers, hyphens, or unde
   }
 
   rl.close();
+}
+
+function readFileAsync(filePath, encoding) {
+  return new Promise((resolve, reject) => {
+    readFile(filePath, encoding, (err, data) => {
+      if (err) reject(err);
+      else resolve(data);
+    });
+  });
+}
+
+function writeFileAsync(filePath, data, encoding) {
+  return new Promise((resolve, reject) => {
+    writeFile(filePath, data, encoding, (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
+
+function unlinkAsync(filePath) {
+  return new Promise((resolve, reject) => {
+    unlinkSync(filePath, (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
+
+rl.question("Enter the new project name (only letters, numbers, hyphens, or underscores): ", (newName) => {
+  if (!/^[a-zA-Z0-9_-]+$/.test(newName)) {
+    console.log("❌ Invalid project name. Use only letters, numbers, hyphens, or underscores.");
+    rl.close();
+    return;
+  }
+
+  console.log(`\n🔄 Updating project name from '${basename(process.cwd())}' to '${newName}'...`);
+  updateFilesAndRenameProject(newName);
 });
