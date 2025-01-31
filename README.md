@@ -4,7 +4,7 @@
     git clone https://github.com/GauravVKulkarni/react-tailwind-template.git
 
 2.	Navigate into the project directory:
-    cd vite-tailwind-template
+    cd react-tailwind-template
 
 3.	Run the setup script:
     This will automatically rename the project and update relevant files.
